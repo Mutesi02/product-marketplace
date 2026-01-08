@@ -18,7 +18,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="text-xl font-bold text-gray-800">
-            Marketplace
+            Product Marketplace
           </Link>
           
           <div className="flex items-center space-x-4">

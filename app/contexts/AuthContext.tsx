@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { User } from '../types';
 
@@ -22,7 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userData = Cookies.get('user_data');
     
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        // Clear invalid cookies
+        Cookies.remove('auth_token');
+        Cookies.remove('user_data');
+      }
     }
     setLoading(false);
   }, []);
@@ -37,8 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       businessId: 1
     };
     
-    Cookies.set('auth_token', 'mock-token');
-    Cookies.set('user_data', JSON.stringify(mockUser));
+    Cookies.set('auth_token', 'mock-token', { expires: 7 }); // 7 days
+    Cookies.set('user_data', JSON.stringify(mockUser), { expires: 7 });
     setUser(mockUser);
   };
 
@@ -46,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Cookies.remove('auth_token');
     Cookies.remove('user_data');
     setUser(null);
+    // Redirect to landing page
+    window.location.href = '/';
   };
 
   return (
