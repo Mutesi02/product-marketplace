@@ -2,6 +2,8 @@
 
 import Navbar from './components/Navbar';
 import Link from 'next/link';
+import Image from 'next/image';
+import './globals.css';
 
 export default function Home() {
   return (
@@ -9,26 +11,41 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-20">
+      <section className="relative bg-white overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/imgs/man.jpg"
+            alt="Background"
+            fill
+            className="object-cover object-top animate-slow-zoom"
+            style={{
+              objectPosition: 'center top'
+            }}
+            quality={100}
+            priority
+          />
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20">
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl font-bold text-white mb-6 drop-shadow-2xl">
               Product Marketplace
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-white mb-8 max-w-3xl mx-auto drop-shadow-lg">
               Discover, manage, and showcase products with our comprehensive marketplace platform. 
               Built for businesses to streamline their product operations.
             </p>
             <div className="flex justify-center space-x-4">
               <Link 
                 href="/signup" 
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 shadow-lg transition-all duration-200 hover:shadow-xl"
               >
                 Get Started
               </Link>
               <Link 
                 href="/login" 
-                className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-50"
+                className="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-gray-900 transition-all duration-200 shadow-lg"
               >
                 Sign In
               </Link>
