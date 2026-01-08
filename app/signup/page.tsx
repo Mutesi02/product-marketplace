@@ -14,10 +14,11 @@ export default function Signup() {
     confirmPassword: '',
     companySize: ''
   });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [touched, setTouched] = useState<{[key: string]: boolean}>({});
   const { login } = useAuth();
   const router = useRouter();
 
@@ -43,27 +44,162 @@ export default function Signup() {
   ];
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    // Mark field as touched
+    setTouched({
+      ...touched,
+      [name]: true
+    });
+    
+    // Validate field in real-time
+    validateField(name, value);
   }
+
+  const validateField = (fieldName: string, value: string) => {
+    const newErrors = { ...errors };
+
+    switch (fieldName) {
+      case 'companyName':
+        if (!value.trim()) {
+          newErrors.companyName = 'Company name is required';
+        } else if (value.trim().length < 2) {
+          newErrors.companyName = 'Company name must be at least 2 characters';
+        } else {
+          delete newErrors.companyName;
+        }
+        break;
+
+      case 'industry':
+        if (!value) {
+          newErrors.industry = 'Please select an industry';
+        } else {
+          delete newErrors.industry;
+        }
+        break;
+
+      case 'companySize':
+        if (!value) {
+          newErrors.companySize = 'Please select company size';
+        } else {
+          delete newErrors.companySize;
+        }
+        break;
+
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value.trim()) {
+          newErrors.email = 'Business email is required';
+        } else if (!emailRegex.test(value)) {
+          newErrors.email = 'Please enter a valid email address';
+        } else {
+          delete newErrors.email;
+        }
+        break;
+
+      case 'password':
+        if (!value) {
+          newErrors.password = 'Password is required';
+        } else if (value.length < 8) {
+          newErrors.password = 'Password must be at least 8 characters';
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          newErrors.password = 'Password must contain uppercase, lowercase, and number';
+        } else {
+          delete newErrors.password;
+        }
+        
+        // Also validate confirm password if it exists
+        if (formData.confirmPassword && value !== formData.confirmPassword) {
+          newErrors.confirmPassword = 'Passwords do not match';
+        } else if (formData.confirmPassword && value === formData.confirmPassword) {
+          delete newErrors.confirmPassword;
+        }
+        break;
+
+      case 'confirmPassword':
+        if (!value) {
+          newErrors.confirmPassword = 'Please confirm your password';
+        } else if (formData.password !== value) {
+          newErrors.confirmPassword = 'Passwords do not match';
+        } else {
+          delete newErrors.confirmPassword;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+    // Mark all fields as touched
+    const allTouched = {
+      companyName: true,
+      industry: true,
+      companySize: true,
+      email: true,
+      password: true,
+      confirmPassword: true
+    };
+    setTouched(allTouched);
+
+    // Validate all fields immediately
+    const newErrors: {[key: string]: string} = {};
+
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = 'Company name is required';
+    } else if (formData.companyName.trim().length < 2) {
+      newErrors.companyName = 'Company name must be at least 2 characters';
+    }
+
+    if (!formData.industry) {
+      newErrors.industry = 'Please select an industry';
+    }
+
+    if (!formData.companySize) {
+      newErrors.companySize = 'Please select company size';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'Business email is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, and number';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+
+    // Stop if there are any errors
+    if (Object.keys(newErrors).length > 0) {
+      return;
     }
 
     setLoading(true);
     
     try {
-      setError('');
       await login(formData.email, formData.password);
       router.push('/dashboard');
     } catch (error) {
-      setError('Failed to create an account');
+      setErrors({ general: 'Failed to create account. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -83,9 +219,9 @@ export default function Signup() {
           </div>
           
           <form className="space-y-3" onSubmit={handleSubmit}>
-            {error && (
+            {errors.general && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
-                {error}
+                {errors.general}
               </div>
             )}
             
@@ -98,12 +234,16 @@ export default function Signup() {
                   id="companyName"
                   name="companyName"
                   type="text"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
+                    errors.companyName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="Company name"
                   value={formData.companyName}
                   onChange={handleInputChange}
                 />
+                {touched.companyName && errors.companyName && (
+                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.companyName}</p>
+                )}
               </div>
               
               <div>
@@ -113,8 +253,9 @@ export default function Signup() {
                 <select
                   id="industry"
                   name="industry"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400"
+                  className={`w-full px-3 py-2 border bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400 ${
+                    errors.industry ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                  }`}
                   value={formData.industry}
                   onChange={handleInputChange}
                 >
@@ -125,6 +266,9 @@ export default function Signup() {
                     </option>
                   ))}
                 </select>
+                {touched.industry && errors.industry && (
+                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.industry}</p>
+                )}
               </div>
             </div>
 
@@ -135,8 +279,9 @@ export default function Signup() {
               <select
                 id="companySize"
                 name="companySize"
-                required
-                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400"
+                className={`w-full px-3 py-2 border bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400 ${
+                  errors.companySize ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                }`}
                 value={formData.companySize}
                 onChange={handleInputChange}
               >
@@ -147,6 +292,9 @@ export default function Signup() {
                   </option>
                 ))}
               </select>
+              {touched.companySize && errors.companySize && (
+                <p className="mt-1 text-sm text-red-500 font-medium">{errors.companySize}</p>
+              )}
             </div>
 
             <div>
@@ -158,12 +306,16 @@ export default function Signup() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
+                  errors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                }`}
                 placeholder="your@company.com"
                 value={formData.email}
                 onChange={handleInputChange}
               />
+              {touched.email && errors.email && (
+                <p className="mt-1 text-sm text-red-500 font-medium">{errors.email}</p>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-3">
@@ -177,8 +329,9 @@ export default function Signup() {
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    required
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400"
+                    className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
+                      errors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Password"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -200,6 +353,9 @@ export default function Signup() {
                     )}
                   </button>
                 </div>
+                {touched.password && errors.password && (
+                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.password}</p>
+                )}
               </div>
               
               <div>
@@ -212,8 +368,9 @@ export default function Signup() {
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    required
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400"
+                    className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
+                      errors.confirmPassword ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Confirm"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
@@ -235,6 +392,9 @@ export default function Signup() {
                     )}
                   </button>
                 </div>
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.confirmPassword}</p>
+                )}
               </div>
             </div>
 
