@@ -42,12 +42,12 @@ export default function AdminDashboard() {
         </div>
         <nav className="py-4 flex-1">
           {[
-            { id: 'overview', label: 'Overview', icon: '📊' },
-            { id: 'users', label: 'User Management', icon: '👥' },
-            { id: 'products', label: 'Product Management', icon: '📦' },
-            { id: 'approvals', label: 'Approvals', icon: '✅' },
-            { id: 'analytics', label: 'Analytics', icon: '📈' },
-            { id: 'settings', label: 'System Settings', icon: '⚙️' }
+            { id: 'overview', label: 'Overview' },
+            { id: 'users', label: 'User Management' },
+            { id: 'products', label: 'Product Management' },
+            { id: 'approvals', label: 'Approvals' },
+            { id: 'analytics', label: 'Analytics' },
+            { id: 'settings', label: 'System Settings' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -58,7 +58,6 @@ export default function AdminDashboard() {
                   : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
               }`}
             >
-              <span className="mr-3">{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -97,8 +96,8 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {stats.map((stat, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                     <p className="text-3xl font-bold text-blue-900">{stat.value}</p>
                   </div>
                 </div>

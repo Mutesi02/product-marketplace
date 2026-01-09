@@ -1,9 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -19,8 +16,6 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
-  const { login } = useAuth();
-  const router = useRouter();
 
   const industries = [
     'Technology',
@@ -50,13 +45,11 @@ export default function Signup() {
       [name]: value
     });
     
-    // Mark field as touched
     setTouched({
       ...touched,
       [name]: true
     });
     
-    // Validate field in real-time
     validateField(name, value);
   }
 
@@ -112,7 +105,6 @@ export default function Signup() {
           delete newErrors.password;
         }
         
-        // Also validate confirm password if it exists
         if (formData.confirmPassword && value !== formData.confirmPassword) {
           newErrors.confirmPassword = 'Passwords do not match';
         } else if (formData.confirmPassword && value === formData.confirmPassword) {
@@ -134,21 +126,7 @@ export default function Signup() {
     setErrors(newErrors);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Mark all fields as touched
-    const allTouched = {
-      companyName: true,
-      industry: true,
-      companySize: true,
-      email: true,
-      password: true,
-      confirmPassword: true
-    };
-    setTouched(allTouched);
-
-    // Validate all fields immediately
+  const validateAllFields = () => {
     const newErrors: {[key: string]: string} = {};
 
     if (!formData.companyName.trim()) {
@@ -186,23 +164,35 @@ export default function Signup() {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    setErrors(newErrors);
+    return newErrors;
+  };
 
-    // Stop if there are any errors
-    if (Object.keys(newErrors).length > 0) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const allTouched = {
+      companyName: true,
+      industry: true,
+      companySize: true,
+      email: true,
+      password: true,
+      confirmPassword: true
+    };
+    setTouched(allTouched);
+
+    const validationErrors = validateAllFields();
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
       return;
     }
 
     setLoading(true);
     
-    try {
-      await login(formData.email, formData.password);
-      router.push('/dashboard');
-    } catch (error) {
-      setErrors({ general: 'Failed to create account. Please try again.' });
-    } finally {
+    setTimeout(() => {
+      alert('Account created successfully!');
       setLoading(false);
-    }
+    }, 1500);
   };
 
   return (
@@ -218,7 +208,7 @@ export default function Signup() {
             </p>
           </div>
           
-          <form className="space-y-3" onSubmit={handleSubmit}>
+          <div className="space-y-3">
             {errors.general && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
                 {errors.general}
@@ -235,7 +225,7 @@ export default function Signup() {
                   name="companyName"
                   type="text"
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
-                    errors.companyName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                    touched.companyName && errors.companyName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Company name"
                   value={formData.companyName}
@@ -254,7 +244,7 @@ export default function Signup() {
                   id="industry"
                   name="industry"
                   className={`w-full px-3 py-2 border bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400 ${
-                    errors.industry ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                    touched.industry && errors.industry ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                   value={formData.industry}
                   onChange={handleInputChange}
@@ -280,7 +270,7 @@ export default function Signup() {
                 id="companySize"
                 name="companySize"
                 className={`w-full px-3 py-2 border bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400 ${
-                  errors.companySize ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                  touched.companySize && errors.companySize ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
                 value={formData.companySize}
                 onChange={handleInputChange}
@@ -307,7 +297,7 @@ export default function Signup() {
                 type="email"
                 autoComplete="email"
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
-                  errors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                  touched.email && errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
                 placeholder="your@company.com"
                 value={formData.email}
@@ -330,7 +320,7 @@ export default function Signup() {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
-                      errors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                      touched.password && errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Password"
                     value={formData.password}
@@ -369,7 +359,7 @@ export default function Signup() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white transition-all duration-200 hover:border-gray-400 ${
-                      errors.confirmPassword ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                      touched.confirmPassword && errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Confirm"
                     value={formData.confirmPassword}
@@ -399,8 +389,9 @@ export default function Signup() {
             </div>
 
             <button
-              type="submit"
+              type="button"
               disabled={loading}
+              onClick={handleSubmit}
               className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mt-6"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
@@ -409,12 +400,12 @@ export default function Signup() {
             <div className="text-center pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200">
-                  Login
-                </Link>
+                <a href="#" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200">
+                  Sign in
+                </a>
               </p>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>

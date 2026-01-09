@@ -48,12 +48,12 @@ export default function ApproverDashboard() {
           </div>
           <nav className="py-4 flex-1">
             {[
-              { id: 'overview', label: 'Overview', icon: '📊' },
-              { id: 'pending', label: 'Pending Reviews', icon: '⏳' },
-              { id: 'approved', label: 'Approved Products', icon: '✅' },
-              { id: 'rejected', label: 'Rejected Products', icon: '❌' },
-              { id: 'analytics', label: 'Analytics', icon: '📈' },
-              { id: 'settings', label: 'Settings', icon: '⚙️' }
+              { id: 'overview', label: 'Overview' },
+              { id: 'pending', label: 'Pending Reviews' },
+              { id: 'approved', label: 'Approved Products' },
+              { id: 'rejected', label: 'Rejected Products' },
+              { id: 'analytics', label: 'Analytics' },
+              { id: 'settings', label: 'Settings' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -64,7 +64,6 @@ export default function ApproverDashboard() {
                     : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
                 }`}
               >
-                <span className="mr-3">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
@@ -109,8 +108,8 @@ export default function ApproverDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {stats.map((stat, index) => (
                     <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                         <p className="text-3xl font-bold text-blue-900">{stat.value}</p>
                       </div>
                     </div>
