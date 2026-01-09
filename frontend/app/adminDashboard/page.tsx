@@ -344,24 +344,26 @@ export default function AdminDashboard() {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {products.map((product) => (
-                    <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <h4 className="font-semibold text-gray-900">{product.name}</h4>
-                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          product.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          product.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                          product.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {product.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
-                      <p className="text-sm text-gray-600 mb-3">Created by: {product.created_by_name}</p>
-                      <p className="text-sm text-gray-600 mb-3">{new Date(product.created_at).toLocaleDateString()}</p>
-                      <p className="text-xl font-bold text-blue-900 mb-4">${product.price}</p>
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow h-80 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-4">
+                          <h4 className="font-semibold text-gray-900">{product.name}</h4>
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            product.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            product.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                            product.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {product.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
+                        <p className="text-sm text-gray-600 mb-3">Created by: {product.created_by_name}</p>
+                        <p className="text-sm text-gray-600 mb-3">{new Date(product.created_at).toLocaleDateString()}</p>
+                        <p className="text-xl font-bold text-blue-900 mb-4">${product.price}</p>
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
+                        </div>
                       </div>
                       <div className="flex space-x-2">
                         <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
