@@ -20,6 +20,7 @@ export default function ApproverDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [pendingProducts, setPendingProducts] = useState<Product[]>([]);
   const [approvedProducts, setApprovedProducts] = useState<Product[]>([]);
+  const [rejectedProducts, setRejectedProducts] = useState<Product[]>([]);
   const [analytics, setAnalytics] = useState({
     overview: {
       total_products: 0,
@@ -47,6 +48,7 @@ export default function ApproverDashboard() {
   useEffect(() => {
     fetchPendingProducts();
     fetchApprovedProducts();
+    fetchRejectedProducts();
     fetchStats();
     fetchAnalytics();
   }, []);
@@ -122,6 +124,21 @@ export default function ApproverDashboard() {
     }
   };
 
+  const fetchRejectedProducts = async () => {
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch('http://localhost:8000/api/products/rejected/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRejectedProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching rejected products:', error);
+    }
+  };
+
   const handleApprove = async (productId: number) => {
     setLoading(true);
     try {
@@ -133,7 +150,9 @@ export default function ApproverDashboard() {
       if (response.ok) {
         fetchPendingProducts();
         fetchApprovedProducts();
+        fetchRejectedProducts();
         fetchStats();
+        fetchAnalytics();
       }
     } catch (error) {
       console.error('Error approving product:', error);
@@ -152,7 +171,9 @@ export default function ApproverDashboard() {
       if (response.ok) {
         fetchPendingProducts();
         fetchApprovedProducts();
+        fetchRejectedProducts();
         fetchStats();
+        fetchAnalytics();
       }
     } catch (error) {
       console.error('Error rejecting product:', error);
@@ -194,6 +215,7 @@ export default function ApproverDashboard() {
               { id: 'overview', label: 'Overview' },
               { id: 'pending', label: 'Pending Reviews' },
               { id: 'approved', label: 'Approved Products' },
+              { id: 'rejected', label: 'Rejected Products' },
               { id: 'analytics', label: 'Analytics' }
             ].map((tab) => (
               <button
@@ -282,6 +304,13 @@ export default function ApproverDashboard() {
                                 className="text-green-600 hover:text-green-800 text-sm font-medium transition-colors disabled:opacity-50"
                               >
                                 Approve
+                              </button>
+                              <button 
+                                onClick={() => handleReject(product.id)}
+                                disabled={loading}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors disabled:opacity-50"
+                              >
+                                Reject
                               </button>
                             </div>
                           </div>
@@ -402,6 +431,40 @@ export default function ApproverDashboard() {
               </div>
             )}
 
+            {/* Rejected Products Tab */}
+            {activeTab === 'rejected' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-blue-900">Rejected Products</h3>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {rejectedProducts.map((product) => (
+                      <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-4">
+                          <h4 className="font-semibold text-gray-900 text-lg">{product.name}</h4>
+                          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            rejected
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">{product.description}</p>
+                        <div className="mb-4">
+                          <p className="text-xl font-bold text-blue-900">${product.price}</p>
+                          <p className="text-sm text-gray-600">by {product.created_by_name}</p>
+                          <p className="text-xs text-gray-500">{new Date(product.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {rejectedProducts.length === 0 && (
+                      <div className="col-span-full text-center py-12">
+                        <p className="text-gray-500">No rejected products yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Analytics Tab */}
             {activeTab === 'analytics' && (
               <div className="space-y-6">
@@ -472,7 +535,7 @@ export default function ApproverDashboard() {
             )}
 
             {/* Other tabs placeholder */}
-            {!['overview', 'pending', 'approved', 'analytics'].includes(activeTab) && (
+            {!['overview', 'pending', 'approved', 'rejected', 'analytics'].includes(activeTab) && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <h3 className="text-xl font-semibold text-blue-900 mb-3">
                   {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
