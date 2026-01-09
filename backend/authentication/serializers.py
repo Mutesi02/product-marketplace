@@ -29,10 +29,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField()
     industry = serializers.CharField()
     company_size = serializers.CharField()
+    role = serializers.ChoiceField(choices=UserProfile.ROLE_CHOICES, default='viewer')
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'confirm_password', 'first_name', 'last_name', 'company_name', 'industry', 'company_size']
+        fields = ['username', 'email', 'password', 'confirm_password', 'first_name', 'last_name', 'company_name', 'industry', 'company_size', 'role']
     
     def validate(self, data):
         if data['password'] != data['confirm_password']:
@@ -40,8 +41,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        # Extract business data
+        # Extract business and role data
         validated_data.pop('confirm_password')
+        role = validated_data.pop('role', 'viewer')
         business_data = {
             'name': validated_data.pop('company_name'),
             'industry': validated_data.pop('industry'),
@@ -54,11 +56,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         # Create business
         business = Business.objects.create(**business_data)
         
-        # Create user profile as admin (first user of business)
+        # Create user profile with selected role
         UserProfile.objects.create(
             user=user,
             business=business,
-            role='admin'
+            role=role
         )
         
         return user

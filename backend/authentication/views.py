@@ -26,11 +26,11 @@ class RegisterView(generics.CreateAPIView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    username = request.data.get('username')
+    email = request.data.get('email')
     password = request.data.get('password')
     
-    if username and password:
-        user = authenticate(username=username, password=password)
+    if email and password:
+        user = authenticate(request, username=email, password=password)
         if user:
             refresh = RefreshToken.for_user(user)
             return Response({
@@ -39,7 +39,7 @@ def login_view(request):
                 'access': str(refresh.access_token),
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-    return Response({'error': 'Username and password required'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
