@@ -3,15 +3,23 @@ from .models import Product
 from django.contrib.auth.models import User
 
 class ProductSerializer(serializers.ModelSerializer):
-    seller_name = serializers.CharField(source='seller.username', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    business_name = serializers.CharField(source='business.business.name', read_only=True)
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'category', 'image_url', 
-                 'status', 'seller', 'seller_name', 'created_at', 'updated_at']
-        read_only_fields = ['seller', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'price', 'status', 'created_by', 'created_by_name', 'business', 'business_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_by', 'business', 'created_at', 'updated_at']
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'category', 'image_url']
+        fields = ['name', 'description', 'price']
+        
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if not hasattr(user, 'profile'):
+            raise serializers.ValidationError('User profile not found')
+        validated_data['created_by'] = user
+        validated_data['business'] = user.profile
+        return super().create(validated_data)
