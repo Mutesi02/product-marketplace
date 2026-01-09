@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 interface ProductFormProps {
-  onSubmit: (data: { name: string; description: string; price: number }) => void;
+  onSubmit: (data: { name: string; description: string; price: number; status: string }) => void;
   onCancel: () => void;
-  initialData?: { name: string; description: string; price: number };
+  initialData?: { name: string; description: string; price: number; status: string };
   loading?: boolean;
 }
 
@@ -13,7 +13,8 @@ export default function ProductForm({ onSubmit, onCancel, initialData, loading }
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
-    price: initialData?.price || 0
+    price: initialData?.price || 0,
+    status: initialData?.status || 'draft'
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
@@ -34,23 +35,24 @@ export default function ProductForm({ onSubmit, onCancel, initialData, loading }
       onSubmit({
         name: formData.name.trim(),
         description: formData.description.trim(),
-        price: formData.price
+        price: formData.price,
+        status: formData.status
       });
     }
   };
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 bg-opacity-95 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 border border-gray-100">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-3xl">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-3xl">
           <h3 className="text-xl font-bold text-center">
             {initialData ? 'Edit Product' : 'Create Product'}
           </h3>
         </div>
         
         {/* Form */}
-        <div className="p-6">
+        <div className="p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Product Name */}
             <div>
@@ -77,7 +79,7 @@ export default function ProductForm({ onSubmit, onCancel, initialData, loading }
               </label>
               <textarea
                 required
-                rows={3}
+                rows={2}
                 placeholder="Describe your product"
                 className={`w-full px-4 py-3 border-2 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-blue-300 bg-gray-50 hover:bg-white text-gray-900 font-medium resize-none ${
                   errors.description ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
@@ -109,6 +111,24 @@ export default function ProductForm({ onSubmit, onCancel, initialData, loading }
                 />
               </div>
               {errors.price && <p className="mt-1 text-sm text-red-600 font-medium">{errors.price}</p>}
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                required
+                className="w-full px-4 py-3 border-2 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-blue-300 bg-gray-50 hover:bg-white text-gray-900 font-medium"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="draft">Draft</option>
+                <option value="pending_approval">Pending Approval</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
             </div>
             
             {/* Action Buttons */}

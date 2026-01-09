@@ -10,7 +10,6 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Mock products data
   useEffect(() => {
     const mockProducts: Product[] = [
       {
@@ -46,6 +45,16 @@ export default function Products() {
     setProducts(prev => prev.map(p => 
       p.id === productId ? { ...p, status: 'approved' as const } : p
     ));
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleDelete = (productId: number) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      setProducts(prev => prev.filter(p => p.id !== productId));
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -92,14 +101,18 @@ export default function Products() {
                     Approve
                   </button>
                 )}
-                {canEdit && (
-                  <button
-                    onClick={() => setEditingProduct(product)}
-                    className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
-                  >
-                    Edit
-                  </button>
-                )}
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 cursor-pointer"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
@@ -115,17 +128,31 @@ export default function Products() {
           }}
         />
       )}
+
+      {editingProduct && (
+        <ProductForm
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={(product) => {
+            setProducts(prev => prev.map(p => 
+              p.id === editingProduct.id ? { ...product, id: editingProduct.id } : p
+            ));
+            setEditingProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function ProductForm({ onClose, onSave }: { 
+function ProductForm({ product, onClose, onSave }: { 
+  product?: Product;
   onClose: () => void; 
   onSave: (product: Omit<Product, 'id'>) => void; 
 }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
+  const [name, setName] = useState(product?.name || '');
+  const [description, setDescription] = useState(product?.description || '');
+  const [price, setPrice] = useState(product?.price?.toString() || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
@@ -148,17 +175,16 @@ function ProductForm({ onClose, onSave }: {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
       onSave({
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
-        status: 'draft',
+        status: product?.status || 'draft',
         createdBy: 1,
         businessId: 1,
-        createdAt: new Date().toISOString(),
+        createdAt: product?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
@@ -170,16 +196,13 @@ function ProductForm({ onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto transform transition-all duration-300 scale-100">
-        {/* Header */}
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-xl">
-          <h2 className="text-2xl font-bold text-center">Create Product</h2>
-          <p className="text-blue-100 text-center mt-1">Add a new product to your catalog</p>
+          <h2 className="text-2xl font-bold text-center">{product ? 'Edit Product' : 'Create Product'}</h2>
+          <p className="text-blue-100 text-center mt-1">{product ? 'Update product information' : 'Add a new product to your catalog'}</p>
         </div>
         
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Product Name */}
           <div>
             <label htmlFor="productName" className="block text-sm font-semibold text-gray-700 mb-2">
               Product Name *
@@ -198,7 +221,6 @@ function ProductForm({ onClose, onSave }: {
             {errors.name && <p className="mt-1 text-sm text-red-600 font-medium">{errors.name}</p>}
           </div>
 
-          {/* Description */}
           <div>
             <label htmlFor="productDescription" className="block text-sm font-semibold text-gray-700 mb-2">
               Description *
@@ -217,7 +239,6 @@ function ProductForm({ onClose, onSave }: {
             {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description}</p>}
           </div>
 
-          {/* Price */}
           <div>
             <label htmlFor="productPrice" className="block text-sm font-semibold text-gray-700 mb-2">
               Price (USD) *
@@ -241,7 +262,6 @@ function ProductForm({ onClose, onSave }: {
             {errors.price && <p className="mt-1 text-sm text-red-600 font-medium">{errors.price}</p>}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex space-x-3 pt-4">
             <button
               type="submit"
@@ -254,10 +274,10 @@ function ProductForm({ onClose, onSave }: {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Saving...
+                  {product ? 'Updating...' : 'Saving...'}
                 </div>
               ) : (
-                'Save Product'
+                product ? 'Update Product' : 'Save Product'
               )}
             </button>
             <button
