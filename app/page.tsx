@@ -73,8 +73,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Product Management</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Product Management</h3>
+              <p className="text-gray-700">
                 Efficiently organize and manage your entire product catalog with intuitive tools.
               </p>
             </div>
@@ -85,8 +85,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Analytics & Insights</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Analytics & Insights</h3>
+              <p className="text-gray-700">
                 Get detailed analytics and insights to make data-driven decisions about your products.
               </p>
             </div>
@@ -97,8 +97,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Secure & Reliable</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">Secure & Reliable</h3>
+              <p className="text-gray-700">
                 Enterprise-grade security and reliability to keep your business data safe.
               </p>
             </div>
