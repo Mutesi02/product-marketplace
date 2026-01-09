@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Signup() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
@@ -167,7 +169,7 @@ export default function Signup() {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const allTouched = {
@@ -189,10 +191,38 @@ export default function Signup() {
 
     setLoading(true);
     
-    setTimeout(() => {
-      alert('Account created successfully!');
-      setLoading(false);
-    }, 1500);
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.email.split('@')[0],
+          email: formData.email,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+          first_name: '',
+          last_name: '',
+          company_name: formData.companyName,
+          industry: formData.industry,
+          company_size: formData.companySize
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access);
+        alert('Account created successfully!');
+        router.push('/login');
+      } else {
+        const errorData = await response.json();
+        setErrors({ general: errorData.message || 'Registration failed' });
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+      setErrors({ general: 'Network error. Please try again.' });
+    }
+    
+    setLoading(false);
   };
 
   return (
