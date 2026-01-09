@@ -139,6 +139,29 @@ export default function Dashboard() {
     setFormLoading(false);
   };
 
+  const handleSubmitForApproval = async (productId: number) => {
+    console.log('Submitting product for approval:', productId);
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch(`http://localhost:8000/api/products/${productId}/submit/`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      console.log('Submit response status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Submitted product:', data);
+        fetchProducts();
+      } else {
+        console.error('Failed to submit:', response.status);
+        alert('Failed to submit product for approval');
+      }
+    } catch (error) {
+      console.error('Error submitting product:', error);
+      alert('Error submitting product for approval');
+    }
+  };
+
   const handleDeleteProduct = async (productId: number) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -375,6 +398,14 @@ export default function Dashboard() {
                           >
                             Edit
                           </button>
+                          {product.status === 'draft' && (
+                            <button 
+                              onClick={() => handleSubmitForApproval(product.id)}
+                              className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                            >
+                              Submit
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleDeleteProduct(product.id)}
                             className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
@@ -503,6 +534,14 @@ export default function Dashboard() {
                           >
                             Edit
                           </button>
+                          {product.status === 'draft' && (
+                            <button 
+                              onClick={() => handleSubmitForApproval(product.id)}
+                              className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                            >
+                              Submit
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleDeleteProduct(product.id)}
                             className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
