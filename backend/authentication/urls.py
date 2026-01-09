@@ -18,8 +18,11 @@ urlpatterns = [
     # Admin endpoints
     path('admin/stats/', admin_views.admin_stats, name='admin-stats'),
     path('admin/users/', admin_views.all_users, name='admin-users'),
-    path('admin/products/', admin_views.all_products, name='admin-products'),
-    path('admin/users/<int:user_id>/role/', admin_views.update_user_role, name='update-user-role'),
+    path('admin/users/create/', admin_views.create_user, name='create-user'),
+    path('admin/users/<int:user_id>/update/', admin_views.update_user, name='update-user'),
     path('admin/users/<int:user_id>/delete/', admin_views.delete_user, name='delete-user'),
+    path('admin/products/', admin_views.all_products, name='admin-products'),
+    path('admin/products/<int:product_id>/update/', admin_views.update_product, name='update-product'),
+    path('admin/products/<int:product_id>/delete/', admin_views.delete_product, name='delete-product'),
     path('admin/activities/', admin_views.recent_activities, name='recent-activities'),
 ]
