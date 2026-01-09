@@ -1,29 +1,169 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import RoleGuard from '../components/RoleGuard';
+import UserManagement from '../components/UserManagement';
 import { useAuth } from '../contexts/AuthContext';
+import Cookies from 'js-cookie';
+
+interface User {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  profile: {
+    role: string;
+    business: {
+      name: string;
+    };
+  };
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  status: string;
+  created_by_name: string;
+  created_at: string;
+}
+
+interface Activity {
+  user: string;
+  action: string;
+  time: string;
+  status: string;
+}
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState({
+    total_users: 0,
+    total_products: 0,
+    pending_approvals: 0,
+    total_businesses: 0
+  });
+  const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const stats = [
-    { label: 'Total Users', value: '156' },
-    { label: 'Total Products', value: '89' },
-    { label: 'Pending Approvals', value: '5' },
-    { label: 'System Health', value: '99.8%' }
-  ];
+  useEffect(() => {
+    fetchStats();
+    fetchUsers();
+    fetchProducts();
+    fetchActivities();
+  }, []);
 
-  const recentActivities = [
-    { user: 'John Smith', action: 'Created new product', time: '2 min ago', status: 'pending' },
-    { user: 'Sarah Johnson', action: 'Approved product', time: '1 hour ago', status: 'approved' }
-  ];
+  const fetchStats = async () => {
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch('http://localhost:8000/api/auth/admin/stats/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
-  const pendingApprovals = [
-    { id: 'PRD-001', title: 'Wireless Headphones', editor: 'John Smith', date: '2024-01-15', priority: 'high' },
-    { id: 'PRD-002', title: 'Smart Watch', editor: 'Jane Doe', date: '2024-01-14', priority: 'medium' }
+  const fetchUsers = async () => {
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch('http://localhost:8000/api/auth/admin/users/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch('http://localhost:8000/api/auth/admin/products/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch('http://localhost:8000/api/auth/admin/activities/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data);
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
+
+  const updateUserRole = async (userId: number, newRole: string) => {
+    setLoading(true);
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch(`http://localhost:8000/api/auth/admin/users/${userId}/role/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (response.ok) {
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error);
+    }
+    setLoading(false);
+  };
+
+  const deleteUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    
+    setLoading(true);
+    try {
+      const token = Cookies.get('auth_token');
+      const response = await fetch(`http://localhost:8000/api/auth/admin/users/${userId}/delete/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchUsers();
+        fetchStats();
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+    setLoading(false);
+  };
+
+  const statsArray = [
+    { label: 'Total Users', value: stats.total_users.toString() },
+    { label: 'Total Products', value: stats.total_products.toString() },
+    { label: 'Pending Approvals', value: stats.pending_approvals.toString() },
+    { label: 'Total Businesses', value: stats.total_businesses.toString() }
   ];
 
   return (
@@ -105,7 +245,7 @@ export default function AdminDashboard() {
           <div className="space-y-8">
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
+              {statsArray.map((stat, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-600">{stat.label}</p>
@@ -123,24 +263,28 @@ export default function AdminDashboard() {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
+                    {activities.slice(0, 5).map((activity, index) => (
                       <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                         <div>
                           <p className="text-sm font-medium text-gray-900">{activity.user}</p>
                           <p className="text-sm text-gray-600">{activity.action}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">{activity.time}</p>
+                          <p className="text-sm text-gray-500">{new Date(activity.time).toLocaleString()}</p>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            activity.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                            activity.status === 'pending' ? 'bg-blue-200 text-blue-900' :
+                            activity.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            activity.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                            activity.status === 'rejected' ? 'bg-red-100 text-red-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {activity.status}
+                            {activity.status.replace('_', ' ')}
                           </span>
                         </div>
                       </div>
                     ))}
+                    {activities.length === 0 && (
+                      <p className="text-gray-500 text-center py-4">No recent activities</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -152,19 +296,15 @@ export default function AdminDashboard() {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
-                    {pendingApprovals.map((item, index) => (
+                    {products.filter(p => p.status === 'pending_approval').slice(0, 5).map((product, index) => (
                       <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                          <p className="text-sm text-gray-600">by {item.editor} • {item.date}</p>
+                          <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                          <p className="text-sm text-gray-600">by {product.created_by_name} • {new Date(product.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            item.priority === 'high' ? 'bg-blue-200 text-blue-900' :
-                            item.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
-                            'bg-blue-50 text-blue-700'
-                          }`}>
-                            {item.priority}
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            pending
                           </span>
                           <button className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
                             Review
@@ -172,6 +312,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     ))}
+                    {products.filter(p => p.status === 'pending_approval').length === 0 && (
+                      <p className="text-gray-500 text-center py-4">No pending approvals</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -181,55 +324,12 @@ export default function AdminDashboard() {
 
           {/* User Management Tab */}
           {activeTab === 'users' && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-blue-900">User Management</h3>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                  Add New User
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-blue-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {[
-                      { name: 'John Smith', email: 'john@company.com', role: 'Editor', status: 'Active' },
-                      { name: 'Sarah Johnson', email: 'sarah@company.com', role: 'Approver', status: 'Active' }
-                    ].map((user, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-600">{user.email}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-blue-600 hover:text-blue-900 mr-4 transition-colors">Edit</button>
-                          <button className="text-blue-800 hover:text-blue-900 transition-colors">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <UserManagement 
+              users={users}
+              onUpdateRole={updateUserRole}
+              onDeleteUser={deleteUser}
+              loading={loading}
+            />
           )}
 
           {/* Product Management Tab */}
@@ -243,34 +343,41 @@ export default function AdminDashboard() {
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {[
-                    { id: 'PRD-001', name: 'Wireless Headphones', status: 'pending', editor: 'John Smith', price: '$299' },
-                    { id: 'PRD-002', name: 'Smart Watch', status: 'approved', editor: 'Jane Doe', price: '$199' }
-                  ].map((product, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  {products.map((product) => (
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-4">
                         <h4 className="font-semibold text-gray-900">{product.name}</h4>
                         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          product.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                          product.status === 'pending' ? 'bg-blue-200 text-blue-900' :
-                          'bg-blue-50 text-blue-700'
+                          product.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          product.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                          product.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
-                          {product.status}
+                          {product.status.replace('_', ' ')}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
-                      <p className="text-sm text-gray-600 mb-3">Editor: {product.editor}</p>
-                      <p className="text-xl font-bold text-blue-900 mb-4">{product.price}</p>
+                      <p className="text-sm text-gray-600 mb-3">Created by: {product.created_by_name}</p>
+                      <p className="text-sm text-gray-600 mb-3">{new Date(product.created_at).toLocaleDateString()}</p>
+                      <p className="text-xl font-bold text-blue-900 mb-4">${product.price}</p>
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 line-clamp-3">{product.description}</p>
+                      </div>
                       <div className="flex space-x-2">
                         <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
                           Edit
                         </button>
-                        <button className="flex-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">
+                        <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors">
                           Delete
                         </button>
                       </div>
                     </div>
                   ))}
+                  {products.length === 0 && (
+                    <div className="col-span-full text-center py-8">
+                      <p className="text-gray-500">No products found</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
