@@ -91,7 +91,8 @@ export default function Login() {
     
     try {
       await login(formData.email, formData.password);
-      router.push('/dashboard');
+      // The dashboard page will handle role-based routing
+      router.replace('/dashboard');
     } catch (error) {
       setErrors({ general: 'Invalid email or password. Please try again.' });
     } finally {

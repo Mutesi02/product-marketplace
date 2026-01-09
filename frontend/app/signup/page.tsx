@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Signup() {
   const router = useRouter();
@@ -11,7 +12,8 @@ export default function Signup() {
     email: '',
     password: '',
     confirmPassword: '',
-    companySize: ''
+    companySize: '',
+    role: 'viewer'
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,12 @@ export default function Signup() {
     '51-200 employees',
     '201-1000 employees',
     '1000+ employees'
+  ];
+
+  const roles = [
+    { value: 'viewer', label: 'Viewer' },
+    { value: 'editor', label: 'Editor' },
+    { value: 'approver', label: 'Approver' }
   ];
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -82,6 +90,14 @@ export default function Signup() {
           newErrors.companySize = 'Please select company size';
         } else {
           delete newErrors.companySize;
+        }
+        break;
+
+      case 'role':
+        if (!value) {
+          newErrors.role = 'Please select a role';
+        } else {
+          delete newErrors.role;
         }
         break;
 
@@ -145,6 +161,10 @@ export default function Signup() {
       newErrors.companySize = 'Please select company size';
     }
 
+    if (!formData.role) {
+      newErrors.role = 'Please select a role';
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       newErrors.email = 'Business email is required';
@@ -178,7 +198,8 @@ export default function Signup() {
       companySize: true,
       email: true,
       password: true,
-      confirmPassword: true
+      confirmPassword: true,
+      role: true
     };
     setTouched(allTouched);
 
@@ -204,14 +225,14 @@ export default function Signup() {
           last_name: '',
           company_name: formData.companyName,
           industry: formData.industry,
-          company_size: formData.companySize
+          company_size: formData.companySize,
+          role: formData.role
         })
       });
       
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('access_token', data.access);
-        alert('Account created successfully!');
         router.push('/login');
       } else {
         const errorData = await response.json();
@@ -314,6 +335,30 @@ export default function Signup() {
               </select>
               {touched.companySize && errors.companySize && (
                 <p className="mt-1 text-sm text-red-500 font-medium">{errors.companySize}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                className={`w-full px-3 py-2 border bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all duration-200 hover:border-gray-400 ${
+                  touched.role && errors.role ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+                }`}
+                value={formData.role}
+                onChange={handleInputChange}
+              >
+                {roles.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              {touched.role && errors.role && (
+                <p className="mt-1 text-sm text-red-500 font-medium">{errors.role}</p>
               )}
             </div>
 
@@ -430,9 +475,9 @@ export default function Signup() {
             <div className="text-center pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <a href="#" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200">
+                <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors duration-200">
                   Sign in
-                </a>
+                </Link>
               </p>
             </div>
           </div>

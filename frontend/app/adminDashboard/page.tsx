@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import RoleGuard from '../components/RoleGuard';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminDashboard() {
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   const stats = [
@@ -24,7 +27,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex" style={{position: 'relative'}}>
+    <RoleGuard allowedRoles={['admin']}>
+      <div className="min-h-screen bg-gray-50 flex" style={{position: 'relative'}}>
       <style dangerouslySetInnerHTML={{
         __html: `
           [data-nextjs-toast] {
@@ -67,9 +71,16 @@ export default function AdminDashboard() {
         <div className="p-6 border-t border-gray-200 relative z-20">
           <div className="flex items-center space-x-3">
             <img className="h-10 w-10 rounded-full border-2 border-blue-200" src="/imgs/man.jpg" alt="Admin" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Admin User</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-600">{user?.role}</p>
             </div>
+            <button 
+              onClick={logout}
+              className="text-xs text-red-600 hover:text-red-800 font-medium"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -276,6 +287,7 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       root: __dirname,
     },
   },
+  images: {
+    qualities: [100, 75],
+  },
 };
 
 export default nextConfig;

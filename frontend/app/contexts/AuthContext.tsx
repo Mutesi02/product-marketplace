@@ -35,18 +35,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const mockUser: User = {
-      id: 1,
-      email,
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'admin',
-      businessId: 1
-    };
-    
-    Cookies.set('auth_token', 'mock-token', { expires: 7 }); // 7 days
-    Cookies.set('user_data', JSON.stringify(mockUser), { expires: 7 });
-    setUser(mockUser);
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          firstName: data.user.first_name || '',
+          lastName: data.user.last_name || '',
+          role: data.user.profile?.role || 'viewer',
+          businessId: data.user.profile?.business?.id || 0
+        };
+        
+        Cookies.set('auth_token', data.access, { expires: 7 });
+        Cookies.set('user_data', JSON.stringify(userData), { expires: 7 });
+        setUser(userData);
+      } else {
+        throw new Error('Login failed');
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
