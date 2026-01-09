@@ -1,29 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Cookies from 'js-cookie';
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category?: string;
+  created_at: string;
+}
 
 export default function ViewerDashboard() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('browse');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  const stats = [
-    { label: 'Available Products', value: '156' },
-    { label: 'Categories', value: '12' },
-    { label: 'Recently Added', value: '8' },
-    { label: 'Favorites', value: '23' }
-  ];
+  const [statsData, setStatsData] = useState({
+    available_products: 0,
+    categories: 0,
+    recently_added: 0,
+    favorites: 0
+  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = ['all', 'Electronics', 'Software', 'Hardware', 'Services', 'Tools'];
 
-  const products = [
-    { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 299, rating: 4.5, image: '/imgs/img1.jpg', description: 'High-quality wireless headphones with noise cancellation' },
-    { id: 2, name: 'Smart Watch', category: 'Electronics', price: 399, rating: 4.8, image: '/imgs/img2.jpg', description: 'Advanced smartwatch with health monitoring features' },
-    { id: 3, name: 'Laptop Stand', category: 'Hardware', price: 89, rating: 4.2, image: '/imgs/img3.png', description: 'Ergonomic laptop stand for better posture' },
-    { id: 4, name: 'Project Management Tool', category: 'Software', price: 49, rating: 4.6, image: '/imgs/img4.jpg', description: 'Comprehensive project management solution' }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, productsRes] = await Promise.all([
+          api.get('/auth/viewer/stats/'),
+          api.get('/products/public/')
+        ]);
+        setStatsData(statsRes.data);
+        setProducts(productsRes.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const stats = [
+    { label: 'Available Products', value: statsData.available_products.toString() },
+    { label: 'Categories', value: statsData.categories.toString() },
+    { label: 'Recently Added', value: statsData.recently_added.toString() },
+    { label: 'Favorites', value: statsData.favorites.toString() }
   ];
 
   const filteredProducts = products.filter(product => {
@@ -138,11 +167,11 @@ export default function ViewerDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                       {filteredProducts.map((product) => (
                         <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                          <img 
-                            src={product.image} 
-                            alt={product.name}
-                            className="w-full h-32 object-cover"
-                          />
+                          <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
+                            <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                          </div>
                           <div className="p-3">
                             <div className="flex justify-between items-start mb-2">
                               <h4 className="font-semibold text-gray-900 text-sm">{product.name}</h4>
@@ -155,11 +184,8 @@ export default function ViewerDashboard() {
                             <p className="text-xs text-gray-600 mb-2">{product.description}</p>
                             <div className="flex items-center justify-between mb-4">
                               <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                                {product.category}
+                                {product.category || 'General'}
                               </span>
-                              <div className="flex items-center">
-                                <span className="text-xs text-gray-600">{product.rating}</span>
-                              </div>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-lg font-bold text-blue-900">${product.price}</span>

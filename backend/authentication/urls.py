@@ -25,4 +25,5 @@ urlpatterns = [
     path('admin/products/<int:product_id>/update/', admin_views.update_product, name='update-product'),
     path('admin/products/<int:product_id>/delete/', admin_views.delete_product, name='delete-product'),
     path('admin/activities/', admin_views.recent_activities, name='recent-activities'),
+    path('viewer/stats/', admin_views.viewer_stats, name='viewer-stats'),
 ]

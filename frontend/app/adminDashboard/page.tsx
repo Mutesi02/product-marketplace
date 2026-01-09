@@ -69,9 +69,14 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', description: '', price: '', status: '' });
   const [addingProduct, setAddingProduct] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', id: 0, title: '', message: '' });
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    status: 'draft'
+  });
 
   useEffect(() => {
     fetchStats();
@@ -251,7 +256,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const token = Cookies.get('auth_token');
-      const response = await fetch(`http://localhost:8000/api/auth/admin/products/${productId}/update/`, {
+      const response = await fetch(`http://localhost:8000/api/products/${productId}/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

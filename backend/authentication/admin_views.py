@@ -7,7 +7,7 @@ from django.db.models import Count
 from .models import UserProfile, Business
 from products.models import Product
 from .serializers import UserSerializer
-from .decorators import admin_required
+from .decorators import admin_required, role_required
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -158,11 +158,32 @@ def delete_user(request, user_id):
         user = User.objects.get(id=user_id)
         if user.profile.role == 'admin':
             return Response({'error': 'Cannot delete admin user'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user.delete()
         return Response({'message': 'User deleted successfully'})
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@role_required(['viewer'])
+def viewer_stats(request):
+    """Get viewer dashboard statistics"""
+    from products.models import Product
+    total_products = Product.objects.count()
+    categories = Product.objects.values('category').distinct().count()
+    recently_added = Product.objects.order_by('-created_at')[:10].count()
+
+    # For favorites, if there's a favorites model, but for now, dummy
+    favorites = 0  # TODO: implement favorites
+
+    stats = {
+        'available_products': total_products,
+        'categories': categories,
+        'recently_added': recently_added,
+        'favorites': favorites
+    }
+    return Response(stats)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
