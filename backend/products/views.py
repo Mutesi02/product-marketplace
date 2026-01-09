@@ -40,6 +40,15 @@ def pending_products(request):
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+@role_required(['approver', 'admin'])
+def rejected_products(request):
+    """Get all rejected products"""
+    products = Product.objects.filter(status='rejected')
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
+
 @api_view(['PATCH'])
 @permission_classes([permissions.IsAuthenticated])
 @role_required(['approver', 'admin'])

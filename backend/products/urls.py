@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.ProductListCreateView.as_view(), name='product-list-create'),
     path('<int:pk>/', views.ProductDetailView.as_view(), name='product-detail'),
     path('pending/', views.pending_products, name='pending-products'),
+    path('rejected/', views.rejected_products, name='rejected-products'),
     path('stats/', views.approval_stats, name='approval-stats'),
     path('analytics/', views.analytics_data, name='analytics-data'),
     path('<int:product_id>/approve/', views.approve_product, name='approve-product'),
