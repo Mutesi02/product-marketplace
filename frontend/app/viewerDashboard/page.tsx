@@ -81,19 +81,13 @@ export default function ViewerDashboard() {
           
           {/* User Profile at bottom */}
           <div className="p-6 border-t border-gray-200 relative z-20">
-            <div className="flex items-center space-x-3 mb-3">
+            <div className="flex items-center space-x-3">
               <img className="h-10 w-10 rounded-full border-2 border-blue-200" src="/imgs/man.jpg" alt="Viewer" />
               <div>
                 <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
                 <p className="text-xs text-blue-600">Viewer</p>
               </div>
             </div>
-            <button
-              onClick={logout}
-              className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Logout
-            </button>
           </div>
         </div>
 
@@ -107,6 +101,12 @@ export default function ViewerDashboard() {
                   {activeTab === 'browse' ? 'Browse Products' : 
                    activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                 </h2>
+                <button 
+                  onClick={logout}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                >
+                  Logout
+                </button>
               </div>
             </div>
           </header>

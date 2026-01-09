@@ -75,12 +75,6 @@ export default function AdminDashboard() {
               <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
               <p className="text-xs text-gray-600">{user?.role}</p>
             </div>
-            <button 
-              onClick={logout}
-              className="text-xs text-red-600 hover:text-red-800 font-medium"
-            >
-              Logout
-            </button>
           </div>
         </div>
       </div>
@@ -94,6 +88,12 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-bold text-blue-900">
                 {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
+              <button 
+                onClick={logout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>

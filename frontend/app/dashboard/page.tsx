@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import ProductForm from '../components/ProductForm';
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  status: string;
+  created_by_name: string;
+  created_at: string;
+}
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -24,13 +38,117 @@ export default function Dashboard() {
           break;
         case 'editor':
         default:
-          // Stay on current dashboard for editors or unknown roles
+          fetchProducts();
           break;
       }
     } else if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
+
+  const fetchProducts = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://localhost:8000/api/products/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const handleCreateProduct = async (productData: { name: string; description: string; price: number }) => {
+    setFormLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://localhost:8000/api/products/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+      
+      if (response.ok) {
+        setShowForm(false);
+        fetchProducts();
+      } else {
+        // Fallback: Add product locally if server fails
+        const newProduct: Product = {
+          id: Date.now(),
+          name: productData.name,
+          description: productData.description,
+          price: productData.price,
+          status: 'draft',
+          created_by_name: user?.firstName || user?.email || 'Unknown',
+          created_at: new Date().toISOString()
+        };
+        setProducts(prev => [newProduct, ...prev]);
+        setShowForm(false);
+        alert('Product created locally (server unavailable)');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      // Fallback: Add product locally if network fails
+      const newProduct: Product = {
+        id: Date.now(),
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        status: 'draft',
+        created_by_name: user?.firstName || user?.email || 'Unknown',
+        created_at: new Date().toISOString()
+      };
+      setProducts(prev => [newProduct, ...prev]);
+      setShowForm(false);
+      alert('Product created locally (server unavailable)');
+    }
+    setFormLoading(false);
+  };
+
+  const handleEditProduct = async (productData: { name: string; description: string; price: number }) => {
+    if (!editingProduct) return;
+    setFormLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:8000/api/products/${editingProduct.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+      if (response.ok) {
+        setEditingProduct(null);
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
+    setFormLoading(false);
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:8000/api/products/${productId}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -48,16 +166,17 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'My Products', value: '12' },
-    { label: 'Draft Products', value: '3' },
-    { label: 'Pending Approval', value: '2' },
-    { label: 'Published', value: '7' }
+    { label: 'My Products', value: products.length.toString() },
+    { label: 'Draft Products', value: products.filter(p => p.status === 'draft').length.toString() },
+    { label: 'Pending Approval', value: products.filter(p => p.status === 'pending_approval').length.toString() },
+    { label: 'Published', value: products.filter(p => p.status === 'approved').length.toString() }
   ];
 
-  const recentProducts = [
-    { name: 'Wireless Headphones', status: 'pending', date: '2024-01-15' },
-    { name: 'Smart Watch', status: 'approved', date: '2024-01-14' }
-  ];
+  const recentProducts = products.slice(0, 2).map(product => ({
+    name: product.name,
+    status: product.status,
+    date: new Date(product.created_at).toLocaleDateString()
+  }));
 
   // Editor Dashboard Content
   return (
@@ -107,12 +226,6 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-gray-900">{user?.firstName || user?.email}</p>
               <p className="text-xs text-gray-600">{user?.role}</p>
             </div>
-            <button 
-              onClick={logout}
-              className="text-xs text-red-600 hover:text-red-800 font-medium"
-            >
-              Logout
-            </button>
           </div>
         </div>
       </div>
@@ -126,6 +239,12 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-blue-900">
                 {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
+              <button 
+                onClick={logout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>
@@ -180,7 +299,7 @@ export default function Dashboard() {
                   </div>
                   <div className="p-6 space-y-4">
                     <button 
-                      onClick={() => setActiveTab('create')}
+                      onClick={() => setShowForm(true)}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
                     >
                       Create New Product
@@ -209,7 +328,7 @@ export default function Dashboard() {
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-blue-900">My Products</h3>
                 <button 
-                  onClick={() => setActiveTab('create')}
+                  onClick={() => setShowForm(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
                   Create Product
@@ -217,33 +336,41 @@ export default function Dashboard() {
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {[
-                    { name: 'Wireless Headphones', status: 'pending', price: '$299', date: '2024-01-15' },
-                    { name: 'Smart Watch', status: 'approved', price: '$199', date: '2024-01-14' }
-                  ].map((product, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  {products.map((product) => (
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-4">
                         <h4 className="font-semibold text-gray-900">{product.name}</h4>
                         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          product.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                          product.status === 'pending' ? 'bg-blue-200 text-blue-900' :
-                          'bg-blue-50 text-blue-700'
+                          product.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          product.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
-                          {product.status}
+                          {product.status.replace('_', ' ')}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{product.date}</p>
-                      <p className="text-xl font-bold text-blue-900 mb-4">{product.price}</p>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                      <p className="text-xl font-bold text-blue-900 mb-4">${product.price}</p>
                       <div className="flex space-x-2">
-                        <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                        <button 
+                          onClick={() => setEditingProduct(product)}
+                          className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                        >
                           Edit
                         </button>
-                        <button className="flex-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">
-                          View
+                        <button 
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
                   ))}
+                  {products.length === 0 && (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-gray-500">No products yet. Create your first product!</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -260,6 +387,29 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+      
+      {/* Product Form Modal */}
+      {showForm && (
+        <ProductForm
+          onSubmit={handleCreateProduct}
+          onCancel={() => setShowForm(false)}
+          loading={formLoading}
+        />
+      )}
+      
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <ProductForm
+          onSubmit={handleEditProduct}
+          onCancel={() => setEditingProduct(null)}
+          initialData={{
+            name: editingProduct.name,
+            description: editingProduct.description,
+            price: editingProduct.price
+          }}
+          loading={formLoading}
+        />
+      )}
     </div>
   );
 }
